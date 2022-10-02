@@ -28,8 +28,6 @@ from rest_framework_simplejwt.views import (
 
 
 urlpatterns = [
-
-    # views URLS
     path('', views.index),
     path('getairlinebyusername', views.get_airline_by_username),
     path('getcustomerbyusername', views.get_customer_by_username),
@@ -38,8 +36,12 @@ urlpatterns = [
     path('getflightsbyairlineid', views.get_flights_by_airline_id),
     path('getarrivalflights', views.get_arrival_flights),
     path('getdepartureflights', views.get_departure_flights),
+
     path('getticketsbycustomer', views.get_tickets_by_customer),
+
+
     path('getflightsbycountry', views.get_flights_by_country),
+
     
     #path('customers/<username>', customersView.customers),
 
@@ -59,30 +61,47 @@ urlpatterns = [
     path('countries/<id>', facadeBase.get_country_by_id),#get_country_by_id
     path('adduser', facadeBase.create_new_user),#create_new_user
 
+    #new flights by param function
+    path('flight-by-params/', views.flight_by_params),  # get_country_by_id
+    # path('flight-by-params/<str:origin_name>/<str:dest_name>/<str:dept_date>/', views.flight_by_params),  # get_country_by_id
+
+
 
     # anonymousFacade URLS
     # login
-    path('addcustomer', anonymousFacade.add_customer), #add_customer
-
+    path('addcustomer/', anonymousFacade.add_customer), #add_customer
+    path('getflightsbycountry', views.get_flights_by_country),
 
     # airlineFacade URLS
-    path('updateairline/<id>', airlineFacade.update_airline),
-    path('addflight', airlineFacade.add_flight),
-    path('updateflight/<id>', airlineFacade.update_flight),
-    path('removeflight/<id>', airlineFacade.remove_flight),
-    path('myflights', airlineFacade.get_my_flights),
-    
+    path('get_airline_company/', airlineFacade.get_airline_company),
+    path('update-airline/', airlineFacade.update_airline),
+    path('add-flight/', airlineFacade.add_flight),
 
+
+
+
+    # path('updateflight/<id>', airlineFacade.update_flight),
+    path('update-flight/', airlineFacade.update_flight_),
+    path('flight-detail/<id>/', airlineFacade.flight_detail),
+
+    path('remove/flight/<id>/', airlineFacade.remove_flight),
+
+
+    path('my-flights/', airlineFacade.get_my_flights),
 
     # customerFacade URLS
     path('updatecustomer/<id>', customerFacade.update_customer),
+
     path('addticket', customerFacade.add_ticket),
-    path('tickets/<id>', customerFacade.remove_ticket),
+
+
+    path('remove/tickets/<id>', customerFacade.remove_ticket),
     path('mytickets', customerFacade.get_my_tickets),
 
     # administratorFacade URLS
     path('customers', administratorFacade.get_all_customers),
     path('addairline', administratorFacade.add_airline),
+
     path('addcustomerr',administratorFacade.add_customer),
     path('addadmin',administratorFacade.add_administrator),
     path('removeairline/<id>',administratorFacade.remove_airline),
@@ -91,6 +110,12 @@ urlpatterns = [
 
 
     # path('users', customersView.myUsers),
+    path('get-customer-profile', customersView.customer_profile),
+
+
+
+    path('place-customer', customersView.place_customer),
+
     # path('users/<id>', customersView.myUsers),
     path('token/', anonymousFacade.MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/',TokenRefreshView.as_view(), name='token_refresh'),

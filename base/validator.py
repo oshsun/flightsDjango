@@ -23,7 +23,7 @@ def validate_phone_num(phone_num: str):
            params={'phone_num': phone_num},
         )
 
-def validat_ecredit_card(credit_card: str):
+def validate_credit_card(credit_card: str):
     for digit in credit_card:
         if  not digit.isdigit:
             raise ValidationError(

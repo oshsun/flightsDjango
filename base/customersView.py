@@ -1,120 +1,61 @@
-from functools import partial
-from django.shortcuts import render
-from django.http import JsonResponse
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-import re
-from urllib import response
-from django.http import HttpResponse
-#from .users import users
-#from .models import Users
-from .models import *
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from .serializers import *
-from rest_framework import status
-from django.db import transaction,IntegrityError
-from rest_framework.parsers import JSONParser 
 
-@api_view(['GET','POST','DELETE','PATCH'])
-def customers(request,id=0):
-    if request.method =='GET':
-        try:
-            if int(id) > 0: #get single customer
-                customer = Customer.objects.get(id=id)
-                serializer = CustomerSerializer(customer)
-                return Response(status=status.HTTP_200_OK, data=serializer.data)
-            else: #get all customers
-                customers =Customer.objects.all()
-                serializer =CustomerSerializer(data=customers, many = True)
-                serializer.is_valid()
-                return Response(status=status.HTTP_200_OK, data=serializer.data)
-        except Exception as ex:
-            print (ex)
-            return Response(status=status.HTTP_400_BAD_REQUEST)# data=ex)
 
-    if request.method == 'POST':  # add a customer
-        with transaction.atomic():
-            user=User.objects.get(id=request.data['user_id'])
-            print(user)
-            new_customer = CustomerSerializer(instance=user, data=request.data)
-            if new_customer.is_valid():
-                customer = new_customer.save()
-            else:
-                return Response(new_customer.errors, status.HTTP_400_BAD_REQUEST)
-            return Response(data=CustomerSerializer(customer).data, status=status.HTTP_201_CREATED)
-                    
-    if request.method =='DELETE': # delete a customer
-        customer = Customer.objects.get(id=id)
-        customer.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-   
-    
-    if request.method =='PATCH': # update a customer
-        customer = Customer.objects.get(id=id)
-        print(11111)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def customer_profile(request):
+    print('i have been called')
+    print(request.user)
+    try:
+        customer = Customer.objects.get(user_id=request.user.id)
         print(customer)
-        print(222222)
-        if 'first_name'  in request.data:
-            customer.first_name=request.data['first_name']
-        if 'last_name'  in request.data:
-            customer.last_name=request.data['last_name']
-        if 'address'  in request.data:
-            customer.address=request.data['address']
-        if 'phone_no'  in request.data:
-            customer.phone_no=request.data['phone_no']
-        if 'credit_card_no'  in request.data:
-            customer.credit_card_no=request.data['credit_card_no']
-        customer.save()
-        serializer=CustomerSerializer(customer)
-        return Response(data=serializer.data,status=status.HTTP_200_OK)
- 
+        serializer = CustomerSerializer(customer, many=False)
+    except:
+        return Response(False)
+    return Response(serializer.data)
 
 
-# @api_view(['GET','POST','DELETE','PATCH'])
-# def myUsers(request,id=0):
-#     if request.method =='GET':
-#         try:
-#             if int(id) > 0: #get single user
-#                 user = User.objects.get(id=id)
-#                 if user:
-#                     serializer = UserSerializer(data=user)
-#                     return Response(status=status.HTTP_200_OK, data=serializer.data)
-#             else:
-#                 users =User.objects.all() # get all users
-#                 serializer =UserSerializer(data=users, many = True)
-#                 print('test')
-#                 if serializer.is_valid():  
-#                     return Response(status=status.HTTP_200_OK, data=serializer.data)
-#         except Exception as ex:
-#             print (ex)
-#             return Response(status=status.HTTP_400_BAD_REQUEST, data=ex)
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def place_customer(request):
+    user = request.user.id
+    request.data['user'] = user
+    if request.method == 'POST':
+        print(f'line 98 {request.data}')
+        serializer = CustomerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            print('saved!')
+            return Response(serializer.data, status=HTTP_201_CREATED)
+        print(f'serialzier erros print {serializer.errors}')
+        print(serializer.errors)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    if request.method == 'PUT':
+        customer = Customer.objects.get(user=request.user)
+        if request.data['first_name'] == "":
+            request.data['first_name'] = customer.first_name
+        if request.data['last_name'] == "":
+            request.data['last_name'] = customer.last_name
+        if request.data['phone_no'] == "":
+            request.data['phone_no'] = customer.phone_no
+        if request.data['address'] == "":
+            request.data['address'] = customer.address
+        if request.data['credit_card_no'] == "":
+            request.data['credit_card_no'] = customer.credit_card_no
+        print('line 118')
+        serializer = CustomerSerializer(customer, data=request.data)
+        print('line 120')
+        print(request.data)
+        if serializer.is_valid():
+            print('line 123')
+            serializer.save()
+            print('line 126')
+            return Response(serializer.data)
+        print(serializer.errors)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-#     if request.method =='POST': # add user
-#         with transaction.atomic():
-#             serializer = UserSerializer(data=request.data)
-#             if serializer.is_valid():
-#                 try:
-#                     serializer.save()
-#                 except IntegrityError as ex:
-#                     return  Response(status=status.HTTP_405_METHOD_NOT_ALLOWED, data=ex)
-#                 return Response(status=status.HTTP_200_OK, data=serializer.data)
-    
-#     if request.method =='DELETE': # delete user
-#         user = User.objects.get(id=id)
-#         serializer = UserSerializer(data=user)
-#         user.delete()
-#         #return Response(status=status.HTTP_200_OK, data=serializer.data)
-#         return JsonResponse({'DELETE': id})
-
-#     if request.method =='PATCH': # update user
-#         user = User.objects.get(id=id)
-#         with transaction.atomic():
-#             serializer = UserSerializer(data=request.data)
-#             if serializer.is_valid():
-#                 try:
-#                     serializer.save()
-#                 except IntegrityError as ex:
-#                     return  Response(status=status.HTTP_405_METHOD_NOT_ALLOWED, data=ex)
-#                 return Response(status=status.HTTP_200_OK, data=serializer.data)
 

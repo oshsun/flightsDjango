@@ -128,15 +128,11 @@ def get_country_by_id(request,id):
 @api_view(['POST'])  ### firsrt checked 
 def create_new_user(request):
     if request.method =='POST':
-        with transaction.atomic():
             print(request.data)
+            if request.data['is_superuser'] == 'true':
+                request.data['is_staff'] = 'true'
             serializer=UserSerializer(data=request.data)
-
             if serializer.is_valid():
-                print()
-                try:
                     serializer.save()
-                except IntegrityError as ex:
-                    return Response(status=405)
-                return Response(status=status.HTTP_201_CREATED,data=serializer.data)
-            return Response(status=status.HTTP_400_BAD_REQUEST,data=serializer.errors)
+                    return Response(status=status.HTTP_201_CREATED, data=serializer.data)
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
